@@ -5,8 +5,10 @@
 
 import scrapy
 
-
 class LeconomisteItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+    title = scrapy.Field()
+    link = scrapy.Field()
+    author = scrapy.Field()
+    date_published = scrapy.Field()
+    image_url = scrapy.Field()
+    content = scrapy.Field()

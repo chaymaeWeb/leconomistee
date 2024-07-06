@@ -10,7 +10,7 @@ DOWNLOADER_MIDDLEWARES = {
 ROBOTSTXT_OBEY = True
 
 ITEM_PIPELINES = {
-    'leconomiste.pipelines.MyPipeline': 300,
+    'leconomiste.pipelines.LeconomistePipeline': 300,
 }
 
 # Paramètres dont la valeur par défaut est obsolète pour une valeur future
@@ -20,11 +20,7 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 # Définir le codage de l'exportation des flux
 FEED_EXPORT_ENCODING = "utf-8"
 
-# Définir le format de sortie et le fichier
-FEEDS = {
-    'article_titles.json': {
-        'format': 'json',
-        'encoding': 'utf8',
-        'fields': ['title'],
-    },
-}
+BOT_NAME = 'leconomiste'
+
+SPIDER_MODULES = ['leconomiste.spiders']
+NEWSPIDER_MODULE = 'leconomiste.spiders'
