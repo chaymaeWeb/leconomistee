@@ -1,14 +1,14 @@
 import scrapy
-import csv
 from scrapy_selenium import SeleniumRequest
 import html
+from leconomiste.items import LeconomisteItem
 
 from leconomiste.items import LeconomisteItem
 
 class ArticlesSpider(scrapy.Spider):
     name = "articles"
     allowed_domains = ["leconomiste.com"]
-    start_urls = ["https://www.leconomiste.com/"]
+    start_urls = ["https://www.leconomiste.com"]
 
     def start_requests(self):
         for url in self.start_urls:
@@ -31,21 +31,26 @@ class ArticlesSpider(scrapy.Spider):
         else:
             self.logger.warning(f"No date found for article at {item['link']}. Skipping...")
         # Flash news articles
-        flash_news_articles = response.css('.view-flash-news .view-content .flexslider .slides li')
+        flash_news_articles = response.css('.view-flash-news .view-content .flexslider .slides li a::attr(href)').getall()
 
-        # Articles from other sections (assuming it's a single link)
-        other_sections_link = response.css('div.col-xs-12.col-sm-12.col-md-12.col-lg-12 span.title_home a::attr(href)').get()
-
-        # Process both sets of links
+        if not flash_news_articles:
+            self.logger.warning('No flash news articles found.')
+        
         for article_link in flash_news_articles:
-            # Extract actual article URL from the flash news element
-            article_url = response.urljoin(article_link.css('a::attr(href)').get())
+            article_url = response.urljoin(article_link)
+            self.logger.info(f'Found article link: {article_url}')
             yield SeleniumRequest(url=article_url, callback=self.parse_article, meta={'link': article_url})
 
-        if other_sections_link:
-            # Process the link in other_sections_articles
-            yield SeleniumRequest(url=response.urljoin(other_sections_link), callback=self.parse_article, meta={'link': other_sections_link})
+        # Articles from other sections (assuming it's a single link)
+        economie_links = response.css('div.col-xs-12.col-sm-12.col-md-12.col-lg-12 span.title_home a::attr(href)').getall()
 
+        if not other_sections_links:
+            self.logger.warning('No links found for other sections.')
+
+        for link in other_sections_links:
+            full_url = response.urljoin(link)
+            self.logger.info(f'Found section link: {full_url}')
+            yield SeleniumRequest(url=full_url, callback=self.parse_article, meta={'link': full_url})
 
     
         title = response.css('span a.title_home::text').getall()
@@ -57,7 +62,7 @@ class ArticlesSpider(scrapy.Spider):
         image_url = response.urljoin(response.css('img.img-responsive::attr(src)').get())
 
         content_elements = response.css('.field-item.even p::text').getall()
-        content = " ".join(html.unescape(elem) for elem in content_elements).replace('\n', ' ').replace('\r', '')
+        item['content'] = " ".join(html.unescape(elem) for elem in content_elements).replace('\n', ' ').replace('\r', '')
 
         if date_published:
             data = { 
@@ -78,4 +83,4 @@ class ArticlesSpider(scrapy.Spider):
 
                 writer.writerow(data)
         else:
-            self.logger.warning(f"No date found for article at {link}. Skipping...")
+            self.logger.warning(f"No date found for article at {item['link']}. Skipping...")
