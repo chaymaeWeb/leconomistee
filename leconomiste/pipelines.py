@@ -1,21 +1,17 @@
-import json
+import csv
 
-class MyPipeline:
+class LeconomistePipeline:
     def open_spider(self, spider):
-        self.file = open('articles.json', 'w')
-        self.file_titles = open('article_titles.json', 'w')
-        self.exported_items = []
+        self.file = open('articles.csv', 'a', encoding='utf-8-sig', newline='')
+        self.fieldnames = ['title', 'link', 'author', 'date_published', 'image_url', 'content']
+        self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames, delimiter=';')
+
+        if self.file.tell() == 0:
+            self.writer.writeheader()
 
     def close_spider(self, spider):
-        self.file.write(json.dumps(self.exported_items, indent=4))
-        self.file_titles.write(json.dumps([item['title'] for item in self.exported_items], indent=4))
         self.file.close()
-        self.file_titles.close()
 
     def process_item(self, item, spider):
-        # Vérifie si la date est présente dans l'article
-        if 'date_published' in item:
-            self.exported_items.append(dict(item))
-        else:
-            spider.logger.warning(f"No date found for article: {item['title']} at {item['link']}. Skipping...")
+        self.writer.writerow(item)
         return item
